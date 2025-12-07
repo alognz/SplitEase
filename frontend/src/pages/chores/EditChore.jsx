@@ -33,12 +33,14 @@ export default function EditChore() {
       try {
         const res = await fetch(`/api/chores/${id}`);
         const data = await res.json();
+
         setForm({
           name: data.name || "",
           assignedTo: data.assignedTo || "",
           dueDate: data.dueDate ? data.dueDate.slice(0, 10) : "",
           color: data.color || ""
         });
+
       } catch (err) {
         console.error(err);
       }
@@ -53,7 +55,6 @@ export default function EditChore() {
 
   async function handleSave(e) {
     e.preventDefault();
-
     setSaving(true);
 
     await fetch(`/api/chores/${id}`, {
@@ -98,6 +99,7 @@ export default function EditChore() {
               value={form.name}
               onChange={handleChange}
               className="mt-1 block w-full border rounded-md px-3 h-[36px]"
+              placeholder="Edit name"
             />
           </div>
 
@@ -109,6 +111,7 @@ export default function EditChore() {
               value={form.assignedTo}
               onChange={handleChange}
               className="mt-1 block w-full border rounded-md px-3 h-[36px]"
+              placeholder="Edit assigned user"
             />
           </div>
 
@@ -132,7 +135,9 @@ export default function EditChore() {
                 type="button"
                 key={c}
                 onClick={() => setForm({ ...form, color: c })}
-                className={`w-10 h-10 rounded-md border ${form.color === c ? "ring-2 ring-[#456F64]" : ""}`}
+                className={`w-10 h-10 rounded-md border ${
+                  form.color === c ? "ring-2 ring-[#456F64]" : ""
+                }`}
                 style={{ backgroundColor: c }}
               />
             ))}
