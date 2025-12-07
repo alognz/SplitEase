@@ -1,97 +1,162 @@
-import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import Layout from "../../components/Layout";
+import PageHeader from "../../components/PageHeader";
 
 export default function EditChore() {
-  const { id } = useParams()
-  const navigate = useNavigate()
+  const { id } = useParams();
+  const navigate = useNavigate();
+  
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
     assignedTo: "",
     dueDate: "",
     color: ""
-  })
+  });
+
+  const colors = [
+    "#92D36E",
+    "#C9B3FF",
+    "#76C9DB",
+    "#FFA959",
+    "#FF747C",
+    "#D3D3D3",
+    "#000000",
+    "#E8C9FF",
+  ];
 
   useEffect(() => {
     async function fetchChore() {
       try {
-        const res = await fetch(`/api/chores/${id}`)
-        const data = await res.json()
-        setForm(data)
+        const res = await fetch(`/api/chores/${id}`);
+        const data = await res.json();
+        setForm({
+          name: data.name || "",
+          assignedTo: data.assignedTo || "",
+          dueDate: data.dueDate ? data.dueDate.slice(0, 10) : "",
+          color: data.color || ""
+        });
       } catch (err) {
-        console.error("failed to load chore", err)
+        console.error(err);
       }
+      setLoading(false);
     }
-    fetchChore()
-  }, [id])
+    fetchChore();
+  }, [id]);
 
   function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault()
+  async function handleSave(e) {
+    e.preventDefault();
 
-    try {
-      const res = await fetch(`/api/chores/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      })
+    setSaving(true);
 
-      if (!res.ok) throw new Error("failed to update chore")
+    await fetch(`/api/chores/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form)
+    });
 
-      navigate("/chores/list")
-    } catch (err) {
-      alert("Failed to update chore")
-    }
+    setSaving(false);
+
+    alert("Chore updated!");
+    navigate("/chores/list");
+  }
+
+  if (loading) {
+    return (
+      <Layout>
+        <PageHeader title="Edit Chore" />
+        <p className="text-gray-500 px-4">Loading chore...</p>
+      </Layout>
+    );
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Edit Chore</h1>
+    <Layout>
+      <PageHeader title="Edit Chore" />
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
-        <input
-          name="name"
-          className="border p-2"
-          placeholder="Chore Name"
-          value={form.name}
-          onChange={handleChange}
-        />
-
-        <input
-          name="assignedTo"
-          className="border p-2"
-          placeholder="Assigned to"
-          value={form.assignedTo}
-          onChange={handleChange}
-        />
-
-        <input
-          name="dueDate"
-          type="date"
-          className="border p-2"
-          value={form.dueDate}
-          onChange={handleChange}
-        />
-
-        <input
-          name="color"
-          className="border p-2"
-          placeholder="Color"
-          value={form.color}
-          onChange={handleChange}
-        />
-
-        <button
-          type="submit"
-          className="bg-green-600 text-white p-2 rounded"
+      <div className="mt-10 flex justify-center">
+        <form
+          onSubmit={handleSave}
+          className="border border-[#456F64] rounded-lg px-10 py-8 w-[400px] shadow-sm"
         >
-          Save
-        </button>
-      </form>
-    </div>
-  )
+          <h2 className="text-center font-semibold text-xl mb-6">
+            Edit Chore
+          </h2>
+
+          {/* Name */}
+          <div className="mb-4">
+            <label className="text-sm font-medium">Chore Name</label>
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              className="mt-1 block w-full border rounded-md px-3 h-[36px]"
+            />
+          </div>
+
+          {/* Assigned */}
+          <div className="mb-4">
+            <label className="text-sm font-medium">Assigned To</label>
+            <input
+              name="assignedTo"
+              value={form.assignedTo}
+              onChange={handleChange}
+              className="mt-1 block w-full border rounded-md px-3 h-[36px]"
+            />
+          </div>
+
+          {/* Due Date */}
+          <div className="mb-4">
+            <label className="text-sm font-medium">Due Date</label>
+            <input
+              type="date"
+              name="dueDate"
+              value={form.dueDate}
+              onChange={handleChange}
+              className="mt-1 block w-full border rounded-md px-3 h-[36px]"
+            />
+          </div>
+
+          {/* Color */}
+          <label className="text-sm font-medium mb-1 block">Color</label>
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            {colors.map((c) => (
+              <button
+                type="button"
+                key={c}
+                onClick={() => setForm({ ...form, color: c })}
+                className={`w-10 h-10 rounded-md border ${form.color === c ? "ring-2 ring-[#456F64]" : ""}`}
+                style={{ backgroundColor: c }}
+              />
+            ))}
+          </div>
+
+          {/* Buttons */}
+          <button
+            type="submit"
+            disabled={saving}
+            className="bg-[#456F64] text-white px-6 py-2 rounded-md w-full mb-3"
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="w-full bg-gray-200 hover:bg-gray-300 transition text-gray-800 py-2 rounded-md font-medium"
+          >
+            Cancel
+          </button>
+        </form>
+      </div>
+    </Layout>
+  );
 }
+
