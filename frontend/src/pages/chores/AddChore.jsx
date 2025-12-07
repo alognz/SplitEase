@@ -1,220 +1,113 @@
-import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function EditChore() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-
-  const [form, setForm] = useState({
-    name: "",
-    assignedTo: "",
-    dueDate: "",
-    color: ""
-  })
-
-  useEffect(() => {
-    async function fetchChore() {
-      try {
-        const res = await fetch(`/api/chores/${id}`)
-        const data = await res.json()
-        setForm(data)
-      } catch (err) {
-        console.error(err)
-      }
-    }
-    fetchChore()
-  }, [id])
-
-  function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault()
-    // TODO: API PUT here
-    navigate("/chores/list")
-  }
-
-  const inputClass =
-    "w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-
-  return (
-    <div className="max-w-md mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">Edit Chore</h1>
-
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label className="block mb-1 text-gray-700 font-semibold">
-            Chore Name
-          </label>
-          <input
-            name="name"
-            className={inputClass}
-            value={form.name}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 text-gray-700 font-semibold">
-            Assigned To
-          </label>
-          <input
-            name="assignedTo"
-            className={inputClass}
-            value={form.assignedTo}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 text-gray-700 font-semibold">
-            Due Date
-          </label>
-          <input
-            name="dueDate"
-            type="date"
-            className={inputClass}
-            value={form.dueDate}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 text-gray-700 font-semibold">
-            Color
-          </label>
-          <input
-            name="color"
-            className={inputClass}
-            value={form.color}
-            onChange={handleChange}
-          />
-        </div>
-
-        <button className="w-full bg-green-600 hover:bg-green-700 transition text-white py-2 rounded-lg font-semibold">
-          Save
-        </button>
-
-        {/* ✨ Cancel Button */}
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="w-full bg-gray-200 hover:bg-gray-300 transition text-gray-800 py-2 rounded-lg font-semibold"
-        >
-          Cancel
-        </button>
-      </form>
-    </div>
-  )
-}
-import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-
-export default function EditChore() {
-  const { id } = useParams()
-  const navigate = useNavigate()
+export default function AddChore() {
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     name: "",
     assignedTo: "",
     dueDate: "",
     color: ""
-  })
-
-  useEffect(() => {
-    async function fetchChore() {
-      try {
-        const res = await fetch(`/api/chores/${id}`)
-        const data = await res.json()
-        setForm(data)
-      } catch (err) {
-        console.error(err)
-      }
-    }
-    fetchChore()
-  }, [id])
+  });
 
   function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    setForm({ ...form, [e.target.name]: e.target.value });
   }
 
+  // 📌 提交 POST API
   async function handleSubmit(e) {
-    e.preventDefault()
-    // TODO: API PUT here
-    navigate("/chores/list")
+    e.preventDefault();
+
+    await fetch("/api/chores", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+
+    navigate("/chores/list");
   }
 
-  const inputClass =
-    "w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+  // Figma颜色 palette
+  const colors = [
+    "#92D36E",
+    "#C9B3FF",
+    "#76C9DB",
+    "#FFA959",
+    "#FF747C",
+    "#D3D3D3",
+    "#000000",
+    "#E8C9FF",
+  ];
 
   return (
-    <div className="max-w-md mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">Edit Chore</h1>
+    <div className="mt-10 flex justify-center">
+      <form 
+         onSubmit={handleSubmit}
+         className="border border-[#456F64] rounded-lg px-10 py-8 w-[400px] shadow-sm"
+      >
+        <h2 className="text-center font-semibold text-xl mb-6">
+          Add A Chore
+        </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label className="block mb-1 text-gray-700 font-semibold">
-            Chore Name
-          </label>
+        {/* Name */}
+        <div className="mb-4">
+          <label className="text-sm font-medium">Chore Name</label>
           <input
             name="name"
-            className={inputClass}
             value={form.name}
             onChange={handleChange}
+            className="mt-1 block w-full border rounded-md px-3 h-[36px]"
+            placeholder="Take out trash"
           />
         </div>
 
-        <div>
-          <label className="block mb-1 text-gray-700 font-semibold">
-            Assigned To
-          </label>
+        {/* Assigned */}
+        <div className="mb-4">
+          <label className="text-sm font-medium">Assigned To</label>
           <input
             name="assignedTo"
-            className={inputClass}
             value={form.assignedTo}
             onChange={handleChange}
+            className="mt-1 block w-full border rounded-md px-3 h-[36px]"
+            placeholder="Maya"
           />
         </div>
 
-        <div>
-          <label className="block mb-1 text-gray-700 font-semibold">
-            Due Date
-          </label>
+        {/* Due Date */}
+        <div className="mb-4">
+          <label className="text-sm font-medium">Due Date</label>
           <input
-            name="dueDate"
             type="date"
-            className={inputClass}
+            name="dueDate"
             value={form.dueDate}
             onChange={handleChange}
+            className="mt-1 block w-full border rounded-md px-3 h-[36px]"
           />
         </div>
 
-        <div>
-          <label className="block mb-1 text-gray-700 font-semibold">
-            Color
-          </label>
-          <input
-            name="color"
-            className={inputClass}
-            value={form.color}
-            onChange={handleChange}
-          />
+        {/* Colors */}
+        <label className="text-sm font-medium mb-1 block">Color</label>
+        <div className="grid grid-cols-4 gap-3 mb-6">
+          {colors.map((c) => (
+            <button
+              type="button"
+              key={c}
+              onClick={() => setForm({ ...form, color: c })}
+              className="w-10 h-10 rounded-md"
+              style={{ backgroundColor: c }}
+            />
+          ))}
         </div>
 
-        <button className="w-full bg-green-600 hover:bg-green-700 transition text-white py-2 rounded-lg font-semibold">
-          Save
-        </button>
-
-        {/* ✨ Cancel Button */}
+        {/* Submit */}
         <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="w-full bg-gray-200 hover:bg-gray-300 transition text-gray-800 py-2 rounded-lg font-semibold"
+          type="submit"
+          className="bg-[#456F64] text-white px-6 py-2 rounded-md w-full"
         >
-          Cancel
+          Add
         </button>
       </form>
     </div>
-  )
+  );
 }
