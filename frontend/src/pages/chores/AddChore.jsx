@@ -15,10 +15,10 @@ export default function AddChore() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-
   async function handleSubmit(e) {
     e.preventDefault()
-    // ...API POST
+    // TODO: API POST here
+    navigate("/chores/list")
   }
 
   const inputClass =
@@ -87,6 +87,15 @@ export default function AddChore() {
 
         <button className={buttonClass}>
           Submit
+        </button>
+
+        {/* ✨ Cancel Button */}
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="w-full bg-gray-200 hover:bg-gray-300 transition text-gray-800 py-2 rounded-lg font-semibold"
+        >
+          Cancel
         </button>
       </form>
     </div>
