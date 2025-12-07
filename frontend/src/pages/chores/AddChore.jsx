@@ -15,73 +15,80 @@ export default function AddChore() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
+
   async function handleSubmit(e) {
     e.preventDefault()
-
-    try {
-      const res = await fetch("/api/chores", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
-      })
-
-      if (!res.ok) throw new Error("Failed to add chore")
-
-      navigate("/chores/list")
-    } catch (err) {
-      console.error(err)
-      alert("Error adding chore")
-    }
+    // ...API POST
   }
 
+  const inputClass =
+    "w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+
+  const buttonClass =
+    "w-full bg-blue-600 hover:bg-blue-700 transition text-white py-2 rounded-lg font-semibold"
+
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Add Chore</h1>
+    <div className="max-w-md mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6 text-gray-800">Add Chore</h1>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
 
-        <input
-          name="name"
-          placeholder="Chore name"
-          className="border p-2 rounded"
-          value={form.name}
-          onChange={handleChange}
-        />
+        <div>
+          <label className="block mb-1 text-gray-700 font-semibold">
+            Chore Name
+          </label>
+          <input
+            name="name"
+            placeholder="Laundry, Trash..."
+            className={inputClass}
+            value={form.name}
+            onChange={handleChange}
+          />
+        </div>
 
-        <input
-          name="assignedTo"
-          placeholder="Assigned to"
-          className="border p-2 rounded"
-          value={form.assignedTo}
-          onChange={handleChange}
-        />
+        <div>
+          <label className="block mb-1 text-gray-700 font-semibold">
+            Assigned To
+          </label>
+          <input
+            name="assignedTo"
+            placeholder="John, Mary..."
+            className={inputClass}
+            value={form.assignedTo}
+            onChange={handleChange}
+          />
+        </div>
 
-        <input
-          name="dueDate"
-          type="date"
-          className="border p-2 rounded"
-          value={form.dueDate}
-          onChange={handleChange}
-        />
+        <div>
+          <label className="block mb-1 text-gray-700 font-semibold">
+            Due Date
+          </label>
+          <input
+            name="dueDate"
+            type="date"
+            className={inputClass}
+            value={form.dueDate}
+            onChange={handleChange}
+          />
+        </div>
 
-        <input
-          name="color"
-          placeholder="Color tag"
-          className="border p-2 rounded"
-          value={form.color}
-          onChange={handleChange}
-        />
+        <div>
+          <label className="block mb-1 text-gray-700 font-semibold">
+            Color Tag
+          </label>
+          <input
+            name="color"
+            placeholder="#ff0000"
+            className={inputClass}
+            value={form.color}
+            onChange={handleChange}
+          />
+        </div>
 
-        <button
-          type="submit"
-          className="bg-blue-500 text-white p-2 rounded"
-        >
-          Add Chore
+        <button className={buttonClass}>
+          Submit
         </button>
       </form>
     </div>
   )
 }
-
