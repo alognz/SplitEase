@@ -1,30 +1,87 @@
-import PageHeader from "../../components/PageHeader";
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 export default function AddChore() {
+  const navigate = useNavigate()
+
+  const [form, setForm] = useState({
+    name: "",
+    assignedTo: "",
+    dueDate: "",
+    color: ""
+  })
+
+  function handleChange(e) {
+    setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+
+    try {
+      const res = await fetch("/api/chores", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      })
+
+      if (!res.ok) throw new Error("Failed to add chore")
+
+      navigate("/chores/list")
+    } catch (err) {
+      console.error(err)
+      alert("Error adding chore")
+    }
+  }
+
   return (
-    <>
-      <PageHeader title="Add Chore" />
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">Add Chore</h1>
 
-      <div className="p-6 space-y-4 bg-white shadow-md rounded-md w-full max-w-md">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
         <input
-          className="border p-2 w-full rounded"
-          placeholder="Chore Name"
+          name="name"
+          placeholder="Chore name"
+          className="border p-2 rounded"
+          value={form.name}
+          onChange={handleChange}
         />
 
         <input
-          className="border p-2 w-full rounded"
-          placeholder="Assigned To"
+          name="assignedTo"
+          placeholder="Assigned to"
+          className="border p-2 rounded"
+          value={form.assignedTo}
+          onChange={handleChange}
         />
 
         <input
-          className="border p-2 w-full rounded"
-          placeholder="Due Date"
+          name="dueDate"
+          type="date"
+          className="border p-2 rounded"
+          value={form.dueDate}
+          onChange={handleChange}
         />
 
-        <button className="bg-blue-600 text-white px-4 py-2 rounded w-full">
+        <input
+          name="color"
+          placeholder="Color tag"
+          className="border p-2 rounded"
+          value={form.color}
+          onChange={handleChange}
+        />
+
+        <button
+          type="submit"
+          className="bg-blue-500 text-white p-2 rounded"
+        >
           Add Chore
         </button>
-      </div>
-    </>
-  );
+      </form>
+    </div>
+  )
 }
+
