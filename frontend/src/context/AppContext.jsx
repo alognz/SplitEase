@@ -4,7 +4,7 @@ export const AppContext = createContext();
 
 export default function AppProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
-  
+
   const [currentGroupId, setCurrentGroupId] = useState(
     localStorage.getItem("groupId") || ""
   );
