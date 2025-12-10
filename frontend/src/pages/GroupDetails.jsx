@@ -11,25 +11,19 @@ export default function GroupDetails() {
 
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
-
-  const mockGroup = {
-    id: "1",
-    name: "My Apartment",
-    members: [
-      { id: "a", username: "You" },
-      { id: "b", username: "Jintao" },
-    ],
-  };
 
   async function fetchGroup() {
     setLoading(true);
+    setError("");
     try {
       const data = await api(`/api/groups/${groupId}`);
       setGroup(data);
       localStorage.setItem(`group_${groupId}`, JSON.stringify(data));
-    } catch {
-      setGroup(mockGroup);
+    } catch (err) {
+      console.error("Failed to load group:", err);
+      setError("Failed to load group. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -53,7 +47,7 @@ export default function GroupDetails() {
     nav("/groups");
   }
 
-  if (loading || !group) {
+  if (loading) {
     return (
       <Layout>
         <div className="p-10 text-center text-textSecondary">Loading...</div>
@@ -61,9 +55,25 @@ export default function GroupDetails() {
     );
   }
 
+  if (!group) {
+    return (
+      <Layout>
+        <div className="max-w-2xl mx-auto font-sans">
+          <p className="text-center text-red-500 mb-4">
+            {error || "Group not found."}
+          </p>
+          <Button variant="secondary" to="/groups" width="w-48">
+            Back to Groups
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="max-w-2xl mx-auto font-sans">
+        {error && <p className="text-red-500 mb-4">{error}</p>}
         <h1 className="text-3xl font-bold text-textPrimary mb-6">
           {group.name}
         </h1>

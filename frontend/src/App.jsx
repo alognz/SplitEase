@@ -1,39 +1,155 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import AppProvider from "./context/AppContext";
+import ProtectedRoute from "./ProtectedRoute";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import Groups from "./pages/Groups";
 import Dashboard from "./pages/Dashboard";
-import Expenses from "./pages/Expenses";
-import Profile from "./pages/Profile";
+import Groups from "./pages/Groups";
 import CreateGroup from "./pages/CreateGroup";
+import GroupDetails from "./pages/GroupDetails";
+import Balances from "./pages/Balances";
+import Expenses from "./pages/Expenses";
 import AddExpense from "./pages/AddExpense";
 import EditExpense from "./pages/EditExpense";
 import ExpenseDetails from "./pages/ExpenseDetails";
-import GroupDetails from "./pages/GroupDetails";
-import Balances from "./pages/Balances";
+import Profile from "./pages/Profile";
+import AddChore from "./pages/chores/AddChore";
+import ChoresList from "./pages/chores/ChoresList";
+import EditChore from "./pages/chores/EditChore";
+import ChoresCalendar from "./pages/chores/ChoresCalendar";
+import ChoreDetails from "./pages/chores/ChoreDetails";
 
 function App() {
   return (
     <AppProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/groups" element={<Groups />} />
-          <Route path="/groups/new" element={<CreateGroup />} />
-          <Route path="/groups/:groupId" element={<GroupDetails />} />
-          <Route path="/groups/:groupId/balances" element={<Balances />} />
-          <Route path="/expenses" element={<Expenses />} />
-          <Route path="/groups/:groupId/expenses/new" element={<AddExpense />} />
-          <Route path="/groups/:groupId/expenses/:expenseId" element={<ExpenseDetails />} />
-          <Route path="/groups/:groupId/expenses/:expenseId/edit" element={<EditExpense />} />
-          <Route path="/chores" element={<div>Chores coming soon</div>} />
-        </Routes>
-      </BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/groups"
+          element={
+            <ProtectedRoute>
+              <Groups />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/groups/new"
+          element={
+            <ProtectedRoute>
+              <CreateGroup />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/groups/:groupId"
+          element={
+            <ProtectedRoute>
+              <GroupDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/groups/:groupId/balances"
+          element={
+            <ProtectedRoute>
+              <Balances />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/expenses"
+          element={
+            <ProtectedRoute>
+              <Expenses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/groups/:groupId/expenses/new"
+          element={
+            <ProtectedRoute>
+              <AddExpense />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/groups/:groupId/expenses/:expenseId"
+          element={
+            <ProtectedRoute>
+              <ExpenseDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/groups/:groupId/expenses/:expenseId/edit"
+          element={
+            <ProtectedRoute>
+              <EditExpense />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/groups/:groupId/chores/new"
+          element={
+            <ProtectedRoute>
+              <AddChore />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chores"
+          element={
+            <ProtectedRoute>
+              <ChoresList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/groups/:groupId/chores/calendar"
+          element={
+            <ProtectedRoute>
+              <ChoresCalendar />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/groups/:groupId/chores/:choreId/edit"
+          element={
+            <ProtectedRoute>
+              <EditChore />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/groups/:groupId/chores/:choreId"
+          element={
+            <ProtectedRoute>
+              <ChoreDetails />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
     </AppProvider>
   );
 }

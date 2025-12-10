@@ -4,10 +4,9 @@ import { AppContext } from "../context/AppContext";
 import { api } from "../utils/api";
 
 export default function UserMenu() {
-  const { saveToken } = useContext(AppContext);
+  const { logout: logoutUser } = useContext(AppContext);
   const menuRef = useRef();
 
-  // Load cached user immediately
   const cachedUser = JSON.parse(localStorage.getItem("user") || "null");
   const [user, setUser] = useState(cachedUser);
   const [open, setOpen] = useState(false);
@@ -17,15 +16,10 @@ export default function UserMenu() {
       const data = await api("/api/auth/me");
       setUser(data);
       localStorage.setItem("user", JSON.stringify(data));
-    } catch {
-      // fallback to fake user for local UI testing
-      const fake = {
-        username: "alondra",
-        email: "alondra@example.com",
-        createdAt: "2025-01-05T12:00:00Z",
-      };
-      setUser(fake);
-      localStorage.setItem("user", JSON.stringify(fake));
+    } catch (err) {
+      console.error("Failed to load user:", err);
+      localStorage.removeItem("user");
+      setUser(null);
     }
   }
 
@@ -42,9 +36,9 @@ export default function UserMenu() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  function logout() {
+  function handleLogout() {
     localStorage.removeItem("user");
-    saveToken(null);
+    logoutUser();
     window.location.href = "/login";
   }
 
@@ -76,7 +70,7 @@ export default function UserMenu() {
           </Link>
 
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="block w-full text-left px-3 py-1.5 text-red-500 hover:bg-gray-100"
           >
             Log Out

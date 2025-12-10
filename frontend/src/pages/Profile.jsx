@@ -16,14 +16,11 @@ export default function Profile() {
         const data = await api("/api/auth/me");
         setUser(data);
         localStorage.setItem("user", JSON.stringify(data));
-      } catch {
-        const mock = {
-          username: "alondra",
-          email: "alondra@example.com",
-          createdAt: "2025-01-05T12:00:00Z",
-        };
-        setUser(mock);
-        localStorage.setItem("user", JSON.stringify(mock));
+      } catch (err) {
+        console.error("Failed to load user:", err);
+        if (!cached) {
+          setUser(null);
+        }
       }
     }
     loadUser();

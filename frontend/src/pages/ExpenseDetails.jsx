@@ -1,30 +1,65 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import Button from "../components/Button";
 import { api } from "../utils/api";
 
 export default function ExpenseDetails() {
-  const { expenseId } = useParams();
-  const [searchParams] = useSearchParams();
-  const groupId = searchParams.get("groupId");
-
+  const { groupId, expenseId } = useParams();
   const nav = useNavigate();
+
   const [expense, setExpense] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchExpense() {
+      if (!groupId || !expenseId) {
+        setError("Missing group ID or expense ID.");
+        setLoading(false);
+        return;
+      }
+
       try {
         const data = await api(`/api/groups/${groupId}/expenses/${expenseId}`);
         setExpense(data);
-      } catch {
-        setError("Couldn't load expense.");
+        setError("");
+      } catch (err) {
+        console.error("Failed to load expense:", err);
+        setError("Couldn't load expense. Please try again.");
+      } finally {
+        setLoading(false);
       }
     }
-
     fetchExpense();
-  }, [expenseId, groupId]);
+  }, [groupId, expenseId]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <p className="text-center mt-10 text-textSecondary">Loading...</p>
+      </Layout>
+    );
+  }
+
+  if (!expense) {
+    return (
+      <Layout>
+        <div className="max-w-2xl mx-auto mt-10 font-sans">
+          <p className="text-center text-red-500 mb-4">
+            {error || "Expense not found."}
+          </p>
+          <Button
+            variant="secondary"
+            to={`/expenses?groupId=${groupId || ""}`}
+            width="w-48"
+          >
+            Back to Expenses
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
 
   async function handleDelete() {
     if (!confirm("Delete this expense?")) return;
@@ -37,89 +72,67 @@ export default function ExpenseDetails() {
     }
   }
 
-  if (!expense) {
-    return (
-      <Layout>
-        <p className="text-center mt-10 text-textSecondary">Loading...</p>
-      </Layout>
-    );
-  }
-
   return (
     <Layout>
       <div className="max-w-2xl mx-auto mt-10 font-sans">
-        {/* Title */}
-        <h1 className="text-3xl font-bold text-textPrimary mb-6">
-          {expense.name}
-        </h1>
+        <h1 className="text-3xl font-bold mb-6">{expense.name}</h1>
 
-        {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+        {error && <p className="text-red-500 mb-4">{error}</p>}
 
-        {/* Card */}
-        <div className="bg-white rounded-lg border shadow-sm p-6 space-y-6">
-          {/* Amount */}
+        <div className="bg-white border rounded-lg shadow-sm p-6 space-y-6">
           <div>
             <p className="text-sm text-textSecondary">Total Amount</p>
-            <p className="text-2xl font-bold text-textPrimary mt-1">
+            <p className="text-2xl font-bold">
               ${(expense.amount / 100).toFixed(2)}
             </p>
           </div>
 
-          {/* Paid By */}
           <div>
             <p className="text-sm text-textSecondary">Paid By</p>
-            <p className="font-medium text-textPrimary mt-1">
-              {expense.paidBy?.username}
-            </p>
+            <p>{expense.paidBy?.username}</p>
           </div>
 
-          {/* Splits */}
           <div>
             <p className="text-sm text-textSecondary mb-2">Split Between</p>
-
             <div className="space-y-2">
               {expense.splits?.map((s) => (
                 <div
                   key={s.userId}
-                  className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border"
+                  className="flex justify-between p-3 bg-gray-50 border rounded-lg"
                 >
-                  <span className="text-textPrimary font-medium">
-                    {s.username}
-                  </span>
-                  <span className="text-textSecondary">
-                    ${(s.amount / 100).toFixed(2)}
-                  </span>
+                  <span>{s.username}</span>
+                  <span>${(s.amount / 100).toFixed(2)}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Created At */}
           <div>
             <p className="text-sm text-textSecondary">Created On</p>
-            <p className="text-textPrimary mt-1">
-              {new Date(expense.createdAt).toLocaleDateString()}
+            <p>
+              {expense.createdAt
+                ? new Date(expense.createdAt).toLocaleDateString()
+                : "Unknown"}
             </p>
           </div>
         </div>
 
-        {/* Buttons */}
         <div className="flex gap-4 mt-8">
           <Button
+            to={`/groups/${groupId}/expenses/${expenseId}/edit`}
             width="w-36"
-            to={`/expenses/${expenseId}/edit?groupId=${groupId}`}
           >
             Edit
           </Button>
 
-          <Button width="w-36" variant="outline" onClick={handleDelete}>
+          <Button variant="outline" onClick={handleDelete} width="w-36">
             Delete
           </Button>
 
           <Button
-            width="w-48"
             variant="secondary"
             to={`/expenses?groupId=${groupId}`}
+            width="w-48"
           >
             Back to Expenses
           </Button>

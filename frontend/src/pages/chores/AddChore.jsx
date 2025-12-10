@@ -1,34 +1,52 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import Layout from "../../components/Layout";
+import Button from "../../components/Button";
+import { api } from "../../utils/api";
 
 export default function AddChore() {
-  const navigate = useNavigate();
+  const { groupId } = useParams();
+  const nav = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const [form, setForm] = useState({
-    name: "",
-    assignedTo: "",
-    dueDate: "",
-    color: ""
-  });
+  const [name, setName] = useState("");
+  const [assignedTo, setAssignedTo] = useState("");
+  const [dueDate, setDueDate] = useState(searchParams.get("dueDate") || "");
+  const [color, setColor] = useState("#5A8A88");
 
-  function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  }
+  const [members, setMembers] = useState([]);
+  const [error, setError] = useState("");
 
-  // 📌 提交 POST API
+  useEffect(() => {
+    async function loadMembers() {
+      try {
+        const group = await api(`/api/groups/${groupId}`);
+        setMembers(group.members);
+      } catch {
+        setMembers([]);
+      }
+    }
+    loadMembers();
+  }, [groupId]);
+
   async function handleSubmit(e) {
     e.preventDefault();
+    setError("");
 
-    await fetch("/api/chores", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    try {
+      await api(`/api/groups/${groupId}/chores`, "POST", {
+        name,
+        assignedTo,
+        dueDate,
+        color,
+      });
 
-    navigate("/chores/list");
+      nav(`/chores?groupId=${groupId}`);
+    } catch (err) {
+      setError(err?.error || "Could not add chore.");
+    }
   }
 
-  // Figma颜色 palette
   const colors = [
     "#92D36E",
     "#C9B3FF",
@@ -41,73 +59,70 @@ export default function AddChore() {
   ];
 
   return (
-    <div className="mt-10 flex justify-center">
-      <form 
-         onSubmit={handleSubmit}
-         className="border border-[#456F64] rounded-lg px-10 py-8 w-[400px] shadow-sm"
-      >
-        <h2 className="text-center font-semibold text-xl mb-6">
-          Add A Chore
-        </h2>
+    <Layout>
+      <div className="max-w-xl mx-auto mt-10 font-sans">
+        <h1 className="text-3xl font-bold text-textPrimary mb-6">Add Chore</h1>
 
-        {/* Name */}
-        <div className="mb-4">
-          <label className="text-sm font-medium">Chore Name</label>
-          <input
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            className="mt-1 block w-full border rounded-md px-3 h-[36px]"
-            placeholder="Take out trash"
-          />
-        </div>
+        {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
 
-        {/* Assigned */}
-        <div className="mb-4">
-          <label className="text-sm font-medium">Assigned To</label>
-          <input
-            name="assignedTo"
-            value={form.assignedTo}
-            onChange={handleChange}
-            className="mt-1 block w-full border rounded-md px-3 h-[36px]"
-            placeholder="Maya"
-          />
-        </div>
-
-        {/* Due Date */}
-        <div className="mb-4">
-          <label className="text-sm font-medium">Due Date</label>
-          <input
-            type="date"
-            name="dueDate"
-            value={form.dueDate}
-            onChange={handleChange}
-            className="mt-1 block w-full border rounded-md px-3 h-[36px]"
-          />
-        </div>
-
-        {/* Colors */}
-        <label className="text-sm font-medium mb-1 block">Color</label>
-        <div className="grid grid-cols-4 gap-3 mb-6">
-          {colors.map((c) => (
-            <button
-              type="button"
-              key={c}
-              onClick={() => setForm({ ...form, color: c })}
-              className="w-10 h-10 rounded-md"
-              style={{ backgroundColor: c }}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <p className="text-sm text-textSecondary mb-1">Chore Name</p>
+            <input
+              className="w-full h-11 border px-3"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
-          ))}
-        </div>
+          </div>
 
-        {/* Submit */}
-        <button
-          type="submit"
-          className="bg-[#456F64] text-white px-6 py-2 rounded-md w-full"
-        >
-          Add
-        </button>
-      </form>
-    </div>
+          <div>
+            <p className="text-sm text-textSecondary mb-1">Assigned To</p>
+            <select
+              className="w-full h-11 border px-3"
+              value={assignedTo}
+              onChange={(e) => setAssignedTo(e.target.value)}
+            >
+              <option value="">Select member</option>
+              {members.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.username}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <p className="text-sm text-textSecondary mb-1">Due Date</p>
+            <input
+              type="date"
+              className="w-full h-11 border px-3"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <p className="text-sm text-textSecondary mb-2">Color</p>
+            <div className="grid grid-cols-4 gap-3">
+              {colors.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setColor(c)}
+                  className={`w-10 h-10 rounded-md border ${
+                    color === c ? "ring-2 ring-primary" : ""
+                  }`}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <Button width="w-full" type="submit">
+            Add Chore
+          </Button>
+        </form>
+      </div>
+    </Layout>
   );
 }

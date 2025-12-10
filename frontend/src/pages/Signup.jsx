@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import { api } from "../utils/api";
@@ -12,7 +12,13 @@ export default function Signup() {
   const [error, setError] = useState("");
 
   const nav = useNavigate();
-  const { saveToken } = useContext(AppContext);
+  const { saveToken, token } = useContext(AppContext);
+
+  useEffect(() => {
+    if (token) {
+      nav("/", { replace: true });
+    }
+  }, [token, nav]);
 
   async function handleSignup(e) {
     e.preventDefault();
@@ -23,6 +29,13 @@ export default function Signup() {
       return;
     }
 
+    if (password.length < 6) {
+      setError(
+        "Password must be Password Requirements: Minimum 8 characters, at least 1 uppercase letter, at least 1 lowercase letter, at least 1 number, at least 1 special character"
+      );
+      return;
+    }
+
     try {
       const data = await api("/api/auth/signup", "POST", {
         username,
@@ -30,11 +43,14 @@ export default function Signup() {
         password,
       });
 
-      saveToken(data.token);
-      nav("/");
+      if (data.token) {
+        saveToken(data.token);
+        nav("/", { replace: true });
+      } else {
+        setError("No token received. Please try again.");
+      }
     } catch (err) {
-      console.log("Signup error:", err);
-      setError(err.error || "Signup failed");
+      setError(err.message || err.error || "Signup failed. Please try again.");
     }
   }
 

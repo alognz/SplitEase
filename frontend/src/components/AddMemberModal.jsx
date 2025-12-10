@@ -6,8 +6,6 @@ export default function AddMemberModal({ groupId, onClose, onAdded }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const mockMember = { id: "999", username: "fakeUser" };
-
   async function handleAdd() {
     if (!username.trim()) {
       setError("Username cannot be empty.");
@@ -26,10 +24,7 @@ export default function AddMemberModal({ groupId, onClose, onAdded }) {
       onClose();
     } catch (err) {
       console.error(err);
-
-      onAdded({ members: [mockMember] });
-
-      setError("User added (mock mode).");
+      setError(err.message || "Failed to add member. Please try again.");
       setLoading(false);
     }
   }

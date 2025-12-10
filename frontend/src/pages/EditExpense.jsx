@@ -16,22 +16,13 @@ export default function EditExpense() {
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [splitValues, setSplitValues] = useState({});
   const [manualMode, setManualMode] = useState(false);
-
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const mockExpense = {
-    id: expenseId,
-    name: "Groceries",
-    amount: 4520,
-    paidBy: { id: "1", username: "You" },
-    splits: [
-      { userId: "1", username: "You", amount: 2260 },
-      { userId: "2", username: "Jintao", amount: 2260 },
-    ],
-  };
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
+      setError("");
       try {
         const group = await api(`/api/groups/${groupId}`);
         setGroupMembers(group.members);
@@ -52,21 +43,11 @@ export default function EditExpense() {
         const splitMap = {};
         expense.splits.forEach((s) => (splitMap[s.userId] = s.amount));
         setSplitValues(splitMap);
-      } catch {
-        setName(mockExpense.name);
-        setAmount((mockExpense.amount / 100).toFixed(2));
-        setPaidBy(mockExpense.paidBy.id);
-
-        setSelectedMembers(
-          mockExpense.splits.map((s) => ({
-            id: s.userId,
-            username: s.username,
-          }))
-        );
-
-        const m = {};
-        mockExpense.splits.forEach((s) => (m[s.userId] = s.amount));
-        setSplitValues(m);
+      } catch (err) {
+        console.error("Failed to load expense:", err);
+        setError("Failed to load expense. Please try again.");
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -136,10 +117,20 @@ export default function EditExpense() {
     }
   }
 
+  if (loading) {
+    return (
+      <Layout>
+        <p className="text-center mt-10 text-textSecondary">Loading...</p>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="max-w-xl mx-auto mt-10 font-sans">
         <h1 className="text-3xl font-bold mb-6">Edit Expense</h1>
+
+        {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
 
         <form onSubmit={handleSave}>
           <p className="text-sm text-textSecondary mb-1">Expense Name</p>

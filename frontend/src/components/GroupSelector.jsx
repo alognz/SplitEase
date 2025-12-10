@@ -9,26 +9,14 @@ export default function GroupSelector({ selectedGroup, onChange }) {
   useEffect(() => {
     async function loadGroups() {
       try {
-        const cached = JSON.parse(localStorage.getItem("groups") || "null");
-
-        let list;
-
-        if (cached) {
-          list = cached;
-        } else {
-          const data = await api("/api/groups");
-          list = data.groups;
-          localStorage.setItem("groups", JSON.stringify(list));
-        }
-
+        const data = await api("/api/groups");
+        const list = data.groups || [];
+        localStorage.setItem("groups", JSON.stringify(list));
         setGroups(list);
-      } catch {
-        const mock = [
-          { id: "1", name: "My Apartment" },
-          { id: "2", name: "CS 409 Roommates" },
-        ];
-        setGroups(mock);
-        localStorage.setItem("groups", JSON.stringify(mock));
+      } catch (err) {
+        console.error("Failed to load groups:", err);
+        const cached = JSON.parse(localStorage.getItem("groups") || "[]");
+        setGroups(cached);
       }
     }
 

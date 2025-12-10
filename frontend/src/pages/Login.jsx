@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import { api } from "../utils/api";
@@ -7,18 +7,39 @@ import Button from "../components/Button";
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { saveToken } = useContext(AppContext);
+  const [error, setError] = useState("");
+  const { saveToken, token } = useContext(AppContext);
   const nav = useNavigate();
+
+  useEffect(() => {
+    if (token) {
+      nav("/", { replace: true });
+    }
+  }, [token, nav]);
 
   async function handleLogin(e) {
     e.preventDefault();
+    setError("");
+
+    if (!username.trim() || !password.trim()) {
+      setError("Please enter both username and password.");
+      return;
+    }
 
     try {
       const data = await api("/api/auth/login", "POST", { username, password });
-      saveToken(data.token);
-      nav("/");
+
+      if (data.token) {
+        saveToken(data.token);
+        nav("/", { replace: true });
+      } else {
+        setError("No token received. Please try again.");
+      }
     } catch (err) {
-      alert("Invalid login, check if your username and password are correct!");
+      setError(
+        err.message ||
+          "Invalid login, check if your username and password are correct!"
+      );
       console.error(err);
     }
   }
@@ -27,6 +48,10 @@ export default function Login() {
     <div className="flex items-center justify-center h-screen bg-background font-sans">
       <form onSubmit={handleLogin} className="w-full max-w-xs">
         <h1 className="text-3xl font-bold mb-2 text-textPrimary">Log In</h1>
+
+        {error && (
+          <p className="text-red-500 text-sm mb-3 text-center">{error}</p>
+        )}
 
         <p className="text-sm font-medium text-textSecondary mb-1">Username</p>
         <input

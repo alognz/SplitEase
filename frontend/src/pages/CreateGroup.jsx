@@ -35,7 +35,7 @@ export default function CreateGroup() {
         memberUsernames: memberUsernames,
       });
 
-      nav(`/dashboard?groupId=${data.id}`);
+      nav("/");
     } catch (err) {
       console.error(err);
       alert("Failed to create group.");

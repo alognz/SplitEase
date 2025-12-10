@@ -5,7 +5,9 @@ import { AppContext } from "./context/AppContext";
 export default function ProtectedRoute({ children }) {
   const { token } = useContext(AppContext);
 
-  if (!token) return <Navigate to="/login" replace />;
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
 
   return children;
 }

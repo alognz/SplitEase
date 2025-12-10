@@ -10,7 +10,7 @@ export default function Button({
   center = false,
 }) {
   const baseStyles =
-    "h-11 rounded-lg font-medium transition inline-flex items-center justify-center"; 
+    "h-11 rounded-lg font-medium transition-all duration-200 inline-flex items-center justify-center hover:scale-105 active:scale-95"; 
 
   const variants = {
     primary: "bg-primary text-white hover:bg-[#4F7C7A]",
