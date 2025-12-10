@@ -12,7 +12,9 @@ export default function ChoresList() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const selectedGroup = searchParams.get("groupId");
+  const urlGroupId = searchParams.get("groupId");
+  const savedGroupId = localStorage.getItem("selectedGroup");
+  const selectedGroup = urlGroupId || savedGroupId || null;
 
   const [chores, setChores] = useState(() => {
     if (!selectedGroup) return [];
@@ -24,28 +26,51 @@ export default function ChoresList() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (selectedGroup && !urlGroupId) {
+      setSearchParams({ groupId: selectedGroup });
+      return;
+    }
+
     if (selectedGroup) return;
+
+    let cancelled = false;
 
     async function loadInitialGroup() {
       try {
         const data = await api("/api/groups");
+        if (cancelled) return;
         const list = data.groups || [];
         localStorage.setItem("groups", JSON.stringify(list));
-
-        if (list.length > 0) {
-          setSearchParams({ groupId: list[0].id });
+        const groupToSelect =
+          savedGroupId && list.some((g) => g.id === savedGroupId)
+            ? savedGroupId
+            : list.length > 0
+            ? list[0].id
+            : null;
+        if (groupToSelect) {
+          setSearchParams({ groupId: groupToSelect });
         }
       } catch (err) {
+        if (cancelled) return;
         console.error("Failed to load groups:", err);
         const cached = JSON.parse(localStorage.getItem("groups") || "[]");
-        if (cached && cached.length > 0) {
-          setSearchParams({ groupId: cached[0].id });
+        const groupToSelect =
+          savedGroupId && cached.some((g) => g.id === savedGroupId)
+            ? savedGroupId
+            : cached && cached.length > 0
+            ? cached[0].id
+            : null;
+        if (groupToSelect) {
+          setSearchParams({ groupId: groupToSelect });
         }
       }
     }
 
     loadInitialGroup();
-  }, [selectedGroup, setSearchParams]);
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedGroup, urlGroupId, savedGroupId, setSearchParams]);
 
   useEffect(() => {
     if (!selectedGroup) {
@@ -54,6 +79,7 @@ export default function ChoresList() {
       return;
     }
 
+    let cancelled = false;
     const cacheKey = `chores_${selectedGroup}`;
     const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
     const hasCachedData = !!cached;
@@ -67,28 +93,33 @@ export default function ChoresList() {
     async function loadChores() {
       try {
         const data = await api(`/api/groups/${selectedGroup}/chores`);
-        const chores = data.chores || [];
-        setChores(chores);
-        localStorage.setItem(cacheKey, JSON.stringify(chores));
+        if (cancelled) return;
+        setChores(data.chores || []);
+        localStorage.setItem(cacheKey, JSON.stringify(data.chores || []));
         setError("");
       } catch (err) {
+        if (cancelled) return;
         console.error("Failed to load chores:", err);
         if (!hasCachedData) {
           setError("Failed to load chores. Please try again.");
           setChores([]);
         }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     loadChores();
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedGroup]);
 
   function handleGroupChange(groupId) {
     if (groupId === "new") return navigate("/groups/new");
-
-    navigate(`/chores?groupId=${groupId}`);
+    localStorage.setItem("selectedGroup", groupId);
+    setSearchParams({ groupId });
   }
 
   return (
@@ -137,13 +168,15 @@ export default function ChoresList() {
         )}
 
         {selectedGroup && (
-          <>
+          <div className="relative">
             {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-            {loading && chores.length === 0 ? (
-              <p className="text-textSecondary mt-8 text-center">
-                Loading chores...
-              </p>
-            ) : chores.length === 0 && !error ? (
+            {loading && (
+              <div className="absolute top-0 right-0 z-10 flex items-center gap-2 text-sm text-textSecondary bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
+                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <span>Updating...</span>
+              </div>
+            )}
+            {chores.length === 0 && !error && !loading ? (
               <div className="mt-8 p-12 bg-gray-50 border border-gray-200 rounded-xl text-center">
                 <MdCheckCircle className="text-5xl text-gray-400 mx-auto mb-4" />
                 <p className="text-textSecondary text-lg mb-4">
@@ -158,7 +191,11 @@ export default function ChoresList() {
                 </Button>
               </div>
             ) : (
-              <div className="flex flex-col gap-4 mt-6">
+              <div
+                className={`flex flex-col gap-4 mt-6 transition-opacity duration-200 ${
+                  loading ? "opacity-75" : "opacity-100"
+                }`}
+              >
                 {chores.map((chore) => (
                   <ChoreCard
                     key={chore.id}
@@ -173,7 +210,7 @@ export default function ChoresList() {
                 ))}
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </Layout>

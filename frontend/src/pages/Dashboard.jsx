@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   MdReceipt,
   MdCheckCircle,
@@ -17,7 +17,23 @@ import { api } from "../utils/api";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [selectedGroup, setSelectedGroup] = useState(null);
+  const location = useLocation();
+  const [selectedGroup, setSelectedGroup] = useState(() => {
+    const saved = localStorage.getItem("selectedGroup");
+    if (saved) return saved;
+
+    const newGroupId = localStorage.getItem("newGroupId");
+    if (newGroupId) return newGroupId;
+
+    return null;
+  });
+  const newGroupIdHandled = useRef(false);
+
+  useEffect(() => {
+    if (selectedGroup) {
+      localStorage.setItem("selectedGroup", selectedGroup);
+    }
+  }, [selectedGroup]);
 
   const [expenses, setExpenses] = useState(() => {
     const cached = JSON.parse(localStorage.getItem("groups") || "[]");
@@ -82,70 +98,6 @@ export default function Dashboard() {
     }
   }
 
-  async function loadDashboardData(groupId) {
-    if (!groupId) {
-      setExpenses([]);
-      setChores([]);
-      setActivity([]);
-      setLoading(false);
-      return;
-    }
-
-    const cacheKey = `dashboard_${groupId}`;
-    const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
-    const hasCachedData = !!cached;
-
-    if (cached) {
-      setExpenses(cached.expenses || []);
-      setChores(cached.chores || []);
-      setActivity(cached.activity || []);
-    } else {
-      setLoading(true);
-    }
-
-    try {
-      const [expRes, choreRes, actRes] = await Promise.all([
-        api(`/api/groups/${groupId}/expenses`),
-        api(`/api/groups/${groupId}/chores`),
-        api(`/api/groups/${groupId}/activities`),
-      ]);
-
-      const newData = {
-        expenses: expRes.expenses || [],
-        chores: choreRes.chores || [],
-        activity: actRes.activities?.map(formatActivity) || [],
-      };
-
-      setExpenses(newData.expenses);
-      setChores(newData.chores);
-      setActivity(newData.activity);
-      localStorage.setItem(cacheKey, JSON.stringify(newData));
-      setError("");
-    } catch (err) {
-      console.error("Failed to load dashboard data:", err);
-      if (err.message?.includes("Group dne") || err.message?.includes("404")) {
-        setError("This group doesn't exist. Please select a different group.");
-        const cached = JSON.parse(localStorage.getItem("groups") || "[]");
-        const filtered = cached.filter((g) => g.id !== groupId);
-        localStorage.setItem("groups", JSON.stringify(filtered));
-        if (filtered.length > 0) {
-          setSelectedGroup(filtered[0].id);
-        } else {
-          setSelectedGroup(null);
-        }
-      } else {
-        if (!hasCachedData) {
-          setError("Failed to load dashboard data. Please try again.");
-          setExpenses([]);
-          setChores([]);
-          setActivity([]);
-        }
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
   function formatActivity(a) {
     const user = a.actor?.username || "Someone";
     const metadata = a.metadata || {};
@@ -178,11 +130,186 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    loadInitialGroup();
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const data = await api("/api/groups");
+        if (cancelled) return;
+        const list = data.groups || [];
+        localStorage.setItem("groups", JSON.stringify(list));
+
+        if (cancelled) return;
+
+        const newGroupId = localStorage.getItem("newGroupId");
+        if (
+          newGroupId &&
+          list.some((g) => g.id === newGroupId) &&
+          !newGroupIdHandled.current
+        ) {
+          setSelectedGroup(newGroupId);
+          localStorage.removeItem("newGroupId");
+          newGroupIdHandled.current = true;
+          return;
+        }
+
+        if (cancelled) return;
+
+        if (selectedGroup && list.some((g) => g.id === selectedGroup)) {
+          return;
+        }
+
+        if (cancelled) return;
+
+        if (list.length > 0) {
+          setSelectedGroup(list[0].id);
+        } else {
+          setSelectedGroup(null);
+          setError("No groups found. Create a group to get started!");
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error("Failed to load groups:", err);
+        const cached = JSON.parse(localStorage.getItem("groups") || "[]");
+        const newGroupId = localStorage.getItem("newGroupId");
+
+        if (newGroupId && cached.some((g) => g.id === newGroupId)) {
+          setSelectedGroup(newGroupId);
+          localStorage.removeItem("newGroupId");
+          newGroupIdHandled.current = true;
+        } else if (
+          selectedGroup &&
+          cached.some((g) => g.id === selectedGroup)
+        ) {
+          return;
+        } else if (cached && cached.length > 0) {
+          setSelectedGroup(cached[0].id);
+        } else {
+          setSelectedGroup(null);
+          setError("Failed to load groups. Please refresh the page.");
+        }
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    if (selectedGroup) loadDashboardData(selectedGroup);
+    if (localStorage.getItem("newGroupId")) {
+      return;
+    }
+
+    let cancelled = false;
+    const cached = JSON.parse(localStorage.getItem("groups") || "null");
+
+    if ((!cached || cached.length === 0) && !selectedGroup) {
+      async function load() {
+        try {
+          const data = await api("/api/groups");
+          if (cancelled) return;
+          const list = data.groups || [];
+          localStorage.setItem("groups", JSON.stringify(list));
+
+          if (list.length > 0) {
+            const newGroupId = localStorage.getItem("newGroupId");
+            if (
+              newGroupId &&
+              list.some((g) => g.id === newGroupId) &&
+              !newGroupIdHandled.current
+            ) {
+              setSelectedGroup(newGroupId);
+              localStorage.removeItem("newGroupId");
+              newGroupIdHandled.current = true;
+            } else if (!selectedGroup) {
+              setSelectedGroup(list[0].id);
+            }
+          }
+        } catch {}
+      }
+      load();
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!selectedGroup) return;
+
+    let cancelled = false;
+
+    async function load() {
+      const cacheKey = `dashboard_${selectedGroup}`;
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+      const hasCachedData = !!cached;
+
+      if (cached) {
+        setExpenses(cached.expenses || []);
+        setChores(cached.chores || []);
+        setActivity(cached.activity || []);
+      } else {
+        setLoading(true);
+      }
+
+      try {
+        const [expRes, choreRes, actRes] = await Promise.all([
+          api(`/api/groups/${selectedGroup}/expenses`),
+          api(`/api/groups/${selectedGroup}/chores`),
+          api(`/api/groups/${selectedGroup}/activities`),
+        ]);
+
+        if (cancelled) return;
+
+        const newData = {
+          expenses: expRes.expenses || [],
+          chores: choreRes.chores || [],
+          activity: actRes.activities?.map(formatActivity) || [],
+        };
+
+        setExpenses(newData.expenses);
+        setChores(newData.chores);
+        setActivity(newData.activity);
+        localStorage.setItem(cacheKey, JSON.stringify(newData));
+        setError("");
+      } catch (err) {
+        if (cancelled) return;
+        console.error("Failed to load dashboard data:", err);
+        if (
+          err.message?.includes("Group dne") ||
+          err.message?.includes("404")
+        ) {
+          setError(
+            "This group doesn't exist. Please select a different group."
+          );
+          const cached = JSON.parse(localStorage.getItem("groups") || "[]");
+          const filtered = cached.filter((g) => g.id !== selectedGroup);
+          localStorage.setItem("groups", JSON.stringify(filtered));
+          if (filtered.length > 0) {
+            setSelectedGroup(filtered[0].id);
+          } else {
+            setSelectedGroup(null);
+          }
+        } else {
+          if (!hasCachedData) {
+            setError("Failed to load dashboard data. Please try again.");
+            setExpenses([]);
+            setChores([]);
+            setActivity([]);
+          }
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedGroup]);
 
   return (
@@ -231,13 +358,19 @@ export default function Dashboard() {
 
         {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
 
-        {loading && expenses.length === 0 && chores.length === 0 ? (
-          <p className="text-textSecondary mt-8 text-center">
-            Loading dashboard...
-          </p>
-        ) : selectedGroup ? (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        {selectedGroup ? (
+          <div className="relative">
+            {loading && (
+              <div className="absolute top-0 right-0 z-10 flex items-center gap-2 text-sm text-textSecondary bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
+                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <span>Updating...</span>
+              </div>
+            )}
+            <div
+              className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 transition-opacity duration-200 ${
+                loading ? "opacity-75" : "opacity-100"
+              }`}
+            >
               <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-5">
                 <div className="flex items-center justify-between mb-2">
                   <div className="p-2 bg-primary/20 rounded-lg">
@@ -393,7 +526,7 @@ export default function Dashboard() {
                 ))}
               </div>
             )}
-          </>
+          </div>
         ) : (
           <div className="mt-8 p-12 bg-gray-50 border border-gray-200 rounded-xl text-center">
             <MdPeople className="text-5xl text-gray-400 mx-auto mb-4" />
