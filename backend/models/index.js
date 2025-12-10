@@ -1,0 +1,7 @@
+module.exports = {
+  User: require('./User'),
+  Group: require('./Group'),
+  Expense: require('./Expense'),
+  Chore: require('./Chore'),
+  Activity: require('./Activity')
+};
