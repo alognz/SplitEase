@@ -38,7 +38,7 @@ export default function ChoresCalendar() {
   }, [groupId]);
 
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const firstDay = new Date(currentYear, currentMonth, 1).getDay(); // 0=Sun
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
 
   const prevMonth = () => {
     if (currentMonth === 0) {

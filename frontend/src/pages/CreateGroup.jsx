@@ -7,6 +7,7 @@ import Button from "../components/Button";
 export default function CreateGroup() {
   const [groupName, setGroupName] = useState("");
   const [members, setMembers] = useState([""]);
+  const [error, setError] = useState("");
   const nav = useNavigate();
 
   function handleAddMember() {
@@ -19,9 +20,10 @@ export default function CreateGroup() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setError("");
 
     if (!groupName.trim()) {
-      alert("Group name cannot be empty.");
+      setError("Group name cannot be empty.");
       return;
     }
 
@@ -35,10 +37,18 @@ export default function CreateGroup() {
         memberUsernames: memberUsernames,
       });
 
+      localStorage.removeItem("groups");
+
+      if (data?.id) {
+        localStorage.setItem("newGroupId", data.id);
+      }
+
       nav("/");
     } catch (err) {
       console.error(err);
-      alert("Failed to create group.");
+      setError(
+        err?.error || err.message || "Failed to create group. Please try again."
+      );
     }
   }
 
@@ -48,6 +58,12 @@ export default function CreateGroup() {
         <h1 className="text-3xl font-bold text-textPrimary mb-6">
           Create Group
         </h1>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <p className="text-xl font-semibold text-textPrimary mb-1">

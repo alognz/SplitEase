@@ -1,5 +1,3 @@
-// In production, use environment variable if set, otherwise fallback to hardcoded URL
-// Note: Frontend code is always public, so this is for flexibility, not security
 const BASE_URL = import.meta.env.DEV
   ? ""
   : import.meta.env.VITE_API_URL || "https://hostedsplitease.onrender.com";
