@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { api } from "../utils/api";
 import Button from "../components/Button";
+import UsernameSearchInput from "../components/UsernameSearchInput";
 
 export default function CreateGroup() {
   const [groupName, setGroupName] = useState("");
@@ -92,15 +93,15 @@ export default function CreateGroup() {
                 <p className="text-sm font-medium text-textSecondary mb-1">
                   Username
                 </p>
-                <input
-                  className="w-full h-11 border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Enter username..."
+                <UsernameSearchInput
                   value={value}
-                  onChange={(e) => {
+                  onChange={(newValue) => {
                     const newMembers = [...members];
-                    newMembers[i] = e.target.value;
+                    newMembers[i] = newValue;
                     setMembers(newMembers);
                   }}
+                  placeholder="Enter username..."
+                  className="w-full h-11 border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 

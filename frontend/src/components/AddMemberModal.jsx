@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../utils/api";
+import UsernameSearchInput from "./UsernameSearchInput";
 
 export default function AddMemberModal({ groupId, onClose, onAdded }) {
   const [username, setUsername] = useState("");
@@ -42,11 +43,11 @@ export default function AddMemberModal({ groupId, onClose, onAdded }) {
           <label className="text-sm text-textSecondary font-medium mb-1 block">
             Username
           </label>
-          <input
-            className="w-full h-11 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-            placeholder="Enter username…"
+          <UsernameSearchInput
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={setUsername}
+            placeholder="Enter username…"
+            className="w-full h-11 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:outline-none"
           />
         </div>
 
